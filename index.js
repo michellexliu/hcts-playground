@@ -36,6 +36,8 @@ const hideElement = (el) => {
 };
 
 let mode = 'custom';
+let selectedCharacter;
+let selectedSetting;
 
 const toggleSuggestions = () => {
   mode = 'suggestions';
@@ -146,21 +148,29 @@ function createRadioOptions(options) {
 }
 
 const populateStoryInfo = () => {
+  const suggestionMode = mode === 'suggestions';
   let formData = {
     age_range: document.getElementById('ageRange').value,
     characters: [],
-    setting: document.getElementById('setting').value,
+    setting:
+      suggestionMode && selectedSetting != null
+        ? selectedSetting
+        : document.getElementById('setting').value,
     interests: document.getElementById('interests').value,
   };
 
-  document.querySelectorAll('.character').forEach(function (characterDiv) {
-    formData.characters.push({
-      name: characterDiv.querySelector('.name').value,
-      role: characterDiv.querySelector('.role').value,
-      type: characterDiv.querySelector('.type').value,
-      more_info: characterDiv.querySelector('.moreInfo').value,
+  if (suggestionMode && selectedCharacter != null) {
+    formData.characters.push(selectedCharacter);
+  } else {
+    document.querySelectorAll('.character').forEach(function (characterDiv) {
+      formData.characters.push({
+        name: characterDiv.querySelector('.name').value,
+        role: characterDiv.querySelector('.role').value,
+        type: characterDiv.querySelector('.type').value,
+        more_info: characterDiv.querySelector('.moreInfo').value,
+      });
     });
-  });
+  }
 
   console.log(JSON.stringify(formData));
 
@@ -177,39 +187,41 @@ function addCustomOption() {
   }
 }
 
-let selectedCharacter;
-let selectedSetting;
+const selectDiv = (div) => {
+  const arr = Array.from(div.parentElement.children);
+  arr.forEach((div) => (div.classList = 'button'));
+  div.classList.add('selected');
+};
 
 function createSuggestionButtons(characters, locations) {
-  let container = document.getElementById('suggestions');
-  container.innerHTML = '';
+  let charContainer = document.getElementById('characterSuggestions');
+  let settingContainer = document.getElementById('settingSuggestions');
+  charContainer.innerHTML = '';
+  settingContainer.innerHTML = '';
 
   characters.forEach((character) => {
     let div = document.createElement('div');
     div.classList.add('button');
     div.textContent = `${character.name} the ${character.type}`;
     div.onclick = function () {
+      selectDiv(div);
       selectedCharacter = {
         name: character.name,
         type: character.type,
         role: 'primary',
       };
     };
-    container.appendChild(div);
+    charContainer.appendChild(div);
   });
-
-  let p = document.createElement('p');
-  p.textContent = `Locations`;
-  container.appendChild(p);
-
   locations.forEach((location) => {
     let div = document.createElement('div');
     div.classList.add('button');
     div.textContent = location;
     div.onclick = function () {
+      selectDiv(div);
       selectedSetting = location;
     };
-    container.appendChild(div);
+    settingContainer.appendChild(div);
   });
 }
 
