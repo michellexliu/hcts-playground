@@ -11,7 +11,47 @@ if (systemPrompt != null && systemPrompt !== '') {
 if (apiKey != null && apiKey !== '') {
   document.getElementById('apiKey').value = apiKey;
 }
-// const obj = {age_range: '3-4 years old',characters:[{name: 'Lily',role: 'main',type: 'human',more_info:'Lily is a curious and adventurous little girl. She loves exploring nature and learning new things.',},],setting: 'a magical forest',interests: 'I love animals and going on adventures'};
+
+const suggestionPrompt =
+  "You are a helpful assistant that helps me come up with ideas for childrens books. You will receive a JSON with the following keys: \
+\
+age_range: the age of the child. you should alter the reading level and complexity of the story according to this. options are '3-4 years old', '5-6 years old', and '6-8 years old'. these should be independently readable for a child in that age group \
+interests: the child's interests or things they like or just general things about them \
+\
+For example, \
+{age_range: '3-4 years old', interests: 'i like unicorns, fairies, and dinosaurs. my favorite color is pink. i'm in the girl scouts. my favorite singer is taylor swift'} \
+ \
+Based on the child's interests and age, you should respond with the following fields, in JSON format and no line breaks: \
+- characters - some recommended characters that can appear in stories for the child. this should be an array with 4 characters. each character is represented as an object with a name and a type (e.g., astronaut, fairy, dog, firefighter, etc.)  \
+- settings - some recommended locations for the story to take place in. these should be descriptive (approximately 2-6 words). examples of descriptive locations are 'a galaxy far far away,' 'a sunny beach,' and 'meadow where the flowers grow'. This should be an array of 4 suggested locations \
+ \
+Example: \
+{characters: [{name: 'raymond', type: 'detective'}, {name: 'elise', type: 'fairy'}, {name: 'bryce', type: 'unicorn'}, {name: 'emily', type: 'mermaid'}], settings: ['a galaxy far far away', 'a sunny beach', 'meadow where the flowers grow', 'memaid-land']}";
+
+const showElement = (el) => {
+  document.getElementById(el).style.display = 'block';
+};
+const hideElement = (el) => {
+  document.getElementById(el).style.display = 'none';
+};
+
+let mode = 'custom';
+
+const toggleSuggestions = () => {
+  mode = 'suggestions';
+  updateFields();
+  hideElement('custom');
+  showElement('suggestions');
+
+  getCharacterLocationSuggestions();
+};
+
+const toggleCustom = () => {
+  mode = 'custom';
+  updateFields();
+  hideElement('suggestions');
+  showElement('custom');
+};
 
 function addCharacter() {
   let div = document.createElement('div');
@@ -30,21 +70,24 @@ function addCharacter() {
   document.getElementById('characters').appendChild(div);
 }
 
+const updateFields = () => {
+  apiKey = document.getElementById('apiKey').value;
+  localStorage.setItem('key', apiKey);
+
+  setSystemPrompt(document.getElementById('systemPrompt').value);
+  populateStoryInfo();
+};
+
 document
   .getElementById('settingsForm')
   .addEventListener('submit', function (event) {
     event.preventDefault(); // Prevents form from submitting in the traditional way
 
-    apiKey = document.getElementById('apiKey').value;
-    localStorage.setItem('key', apiKey);
-
-    setSystemPrompt(document.getElementById('systemPrompt').value);
-
-    populateStoryInfo();
+    updateFields();
 
     makeRequest();
 
-    document.getElementById('customOption').style.display = 'flex';
+    showElement('customOption');
   });
 
 let messages = [{ role: 'system', content: systemPrompt }];
@@ -112,7 +155,6 @@ const populateStoryInfo = () => {
 
   document.querySelectorAll('.character').forEach(function (characterDiv) {
     formData.characters.push({
-      type: 'initial',
       name: characterDiv.querySelector('.name').value,
       role: characterDiv.querySelector('.role').value,
       type: characterDiv.querySelector('.type').value,
@@ -133,6 +175,42 @@ function addCustomOption() {
     selectOption(null, customOptionValue);
     document.getElementById('customOptionInput').value = ''; // Clear the input field
   }
+}
+
+let selectedCharacter;
+let selectedSetting;
+
+function createSuggestionButtons(characters, locations) {
+  let container = document.getElementById('suggestions');
+  container.innerHTML = '';
+
+  characters.forEach((character) => {
+    let div = document.createElement('div');
+    div.classList.add('button');
+    div.textContent = `${character.name} the ${character.type}`;
+    div.onclick = function () {
+      selectedCharacter = {
+        name: character.name,
+        type: character.type,
+        role: 'primary',
+      };
+    };
+    container.appendChild(div);
+  });
+
+  let p = document.createElement('p');
+  p.textContent = `Locations`;
+  container.appendChild(p);
+
+  locations.forEach((location) => {
+    let div = document.createElement('div');
+    div.classList.add('button');
+    div.textContent = location;
+    div.onclick = function () {
+      selectedSetting = location;
+    };
+    container.appendChild(div);
+  });
 }
 
 function createDivButtons(options) {
@@ -169,6 +247,50 @@ function selectOption(selectedDiv, value) {
   addUserMessage(`{"type": "continue", "path": "${value}}"`);
   makeRequest();
 }
+
+const getCharacterLocationSuggestions = () => {
+  const data = {
+    messages: [
+      { role: 'system', content: suggestionPrompt },
+      {
+        role: 'user',
+        content: `{age_range: ${
+          document.getElementById('ageRange').value
+        }, interests: ${document.getElementById('interests').value}}`,
+      },
+    ],
+    model: 'gpt-3.5-turbo',
+    temperature: 0,
+  };
+
+  showLoadingOverlay();
+  // Making the POST request
+  fetch(openAiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(data),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const raw = data.choices[0]?.message.content;
+
+      const parsed = JSON.parse(raw);
+      console.log('raw suggestions', parsed);
+      const characters = parsed?.characters;
+      const settings = parsed?.settings;
+
+      if (parsed != null) createSuggestionButtons(characters, settings);
+
+      console.log('Success:', data);
+      hideLoadingOverlay();
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+};
 
 const makeRequest = () => {
   const data = {

@@ -32,58 +32,97 @@
         align-items: center;
         z-index: 1000;
       }
+
+      body {
+        display: flex;
+        flex-wrap: nowrap;
+      }
+
+      .left,
+      .right {
+        width: 50%;
+      }
     </style>
   </head>
   <body>
-    <header>
-      <h1>Settings</h1>
-    </header>
     <div id="loadingOverlay">
       <div>Loading...</div>
     </div>
-    <form id="settingsForm">
-      <label for="apiKey">API Key:</label>
-      <input type="text" id="apiKey" name="apiKey" /><br /><br />
+    <div class="left">
+      <header>
+        <h1>Settings</h1>
+      </header>
+      <form id="settingsForm">
+        <label for="apiKey">API Key:</label>
+        <input type="text" id="apiKey" name="apiKey" /><br /><br />
 
-      <label for="systemPrompt">System Prompt:</label>
-      <textarea
-        rows="12"
-        cols="50"
-        id="systemPrompt"
-        name="systemPrompt"
-      ></textarea
-      ><br /><br />
-      <label for="ageRange">Age Range:</label>
-      <select name="age_range" id="ageRange">
-        <option value="3-4 years old">3-4 years old</option>
-        <option value="5-6 years old">5-6 years old</option>
-        <option value="6-8 years old">6-8 years old</option>
-      </select>
+        <label for="systemPrompt">System Prompt:</label>
+        <textarea
+          rows="12"
+          cols="50"
+          id="systemPrompt"
+          name="systemPrompt"
+        ></textarea
+        ><br /><br />
+        <label for="ageRange">Age Range:</label>
+        <select name="age_range" id="ageRange">
+          <option value="3-4 years old">3-4 years old</option>
+          <option value="5-6 years old">5-6 years old</option>
+          <option value="6-8 years old">6-8 years old</option>
+        </select>
 
-      <div id="characters">
-        <label>Characters:</label>
-        <button type="button" onclick="addCharacter()">Add Character</button>
+        <br />
+        <label for="interests">Interests:</label>
+        <textarea
+          cols="30"
+          rows="10"
+          type="text"
+          id="interests"
+          name="interests"
+        ></textarea>
+
+        <br />
+        <br />
+        <button type="button" onclick="toggleSuggestions()">
+          AI Suggestions
+        </button>
+        <button type="button" onclick="toggleCustom()">
+          Custom Characters
+        </button>
+
+        <br />
+        <br />
+
+        <div id="custom" style="display: none">
+          <div id="characters">
+            <label>Characters:</label>
+            <button type="button" onclick="addCharacter()">
+              Add Character
+            </button>
+          </div>
+          <br />
+          <label for="setting">Setting:</label>
+          <input type="text" id="setting" name="setting" />
+        </div>
+
+        <div id="suggestions" style="display: none"></div>
+
+        <br />
+        <br />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+    <div class="right">
+      <div id="story"></div>
+      <div id="buttonContainer"></div>
+      <div id="customOption" style="display: none">
+        <input
+          type="text"
+          id="customOptionInput"
+          placeholder="Enter custom option"
+        />
+        <button onclick="addCustomOption()">Choose custom path</button>
       </div>
-
-      <label for="setting">Setting:</label>
-      <input type="text" id="setting" name="setting" />
-
-      <label for="interests">Interests:</label>
-      <input type="text" id="interests" name="interests" />
-      <button type="submit">Submit</button>
-    </form>
-    <br />
-    <br />
-
-    <div id="story"></div>
-    <div id="buttonContainer"></div>
-    <div id="customOption" style="display: none">
-      <input
-        type="text"
-        id="customOptionInput"
-        placeholder="Enter custom option"
-      />
-      <button onclick="addCustomOption()">Choose custom path</button>
     </div>
     <script src="index.js"></script>
   </body>
