@@ -1,9 +1,7 @@
 console.log('hi');
 
 const openAiUrl = 'https://api.openai.com/v1/chat/completions'; // Replace with the actual API endpoint
-let apiKey =
-  localStorage.getItem('key') ??
-  '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'; // Replace with your actual OpenAI API key
+let apiKey = localStorage.getItem('key') ?? ''; // Replace with your actual OpenAI API key
 let systemPrompt =
   localStorage.getItem('systemPrompt') ?? 'Say this is a test!';
 
